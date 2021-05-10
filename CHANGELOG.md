@@ -10,4 +10,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - initial `BoundedVec` implementation including `mapped()`, `first()`, `last()`, to/from array/`Vec`;
 
 <!-- next-url -->
-[Unreleased]: https://github.com/ergoplatform/bounded-vec/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ergoplatform/bounded-vec/compare/v0.0.0...HEAD

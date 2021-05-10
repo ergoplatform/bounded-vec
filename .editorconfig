@@ -1,0 +1,5 @@
+root = true
+
+[*.{md, markdown, eex}]
+trim_trailing_whitespace = false
+

@@ -1,4 +1,4 @@
-[![Coverage Status](https://coveralls.io/repos/github/ergoplatform/bounded-vec/badge.svg)](https://coveralls.io/github/ergoplatform/bounded-vec)
+[![Coverage Status](https://coveralls.io/repos/github/ergoplatform/bounded-vec/badge.svg?branch=develop)](https://coveralls.io/github/ergoplatform/bounded-vec?branch=develop)
 [![Latest Version](https://img.shields.io/crates/v/bounded-vec.svg)](https://crates.io/crates/bounded-vec) [![Documentation](https://docs.rs/bounded-vec/badge.svg)](https://docs.rs/crate/bounded-vec)
 
 ## bounded-vec

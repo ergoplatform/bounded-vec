@@ -131,7 +131,7 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
     /// assert_eq!(*data.first(), 1);
     /// ```
     pub fn first(&self) -> &T {
-        #![allow(clippy::unwrap_used)]
+        #[allow(clippy::unwrap_used)]
         self.inner.first().unwrap()
     }
 
@@ -146,7 +146,7 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
     /// assert_eq!(*data.last(), 2);
     /// ```
     pub fn last(&self) -> &T {
-        #![allow(clippy::unwrap_used)]
+        #[allow(clippy::unwrap_used)]
         self.inner.last().unwrap()
     }
 
@@ -232,5 +232,78 @@ impl<T, const L: usize, const U: usize> From<[T; L]> for BoundedVec<T, L, U> {
 impl<T, const L: usize, const U: usize> From<BoundedVec<T, L, U>> for Vec<T> {
     fn from(v: BoundedVec<T, L, U>) -> Self {
         v.inner
+    }
+}
+
+#[allow(clippy::unwrap_used)]
+#[cfg(test)]
+mod tests {
+    use std::convert::TryInto;
+
+    use super::*;
+
+    #[test]
+    fn from_vec() {
+        assert!(BoundedVec::<u8, 2, 8>::from_vec(vec![1, 2]).is_ok());
+        assert!(BoundedVec::<u8, 2, 8>::from_vec(vec![]).is_err());
+        assert!(BoundedVec::<u8, 3, 8>::from_vec(vec![1, 2]).is_err());
+        assert!(BoundedVec::<u8, 1, 2>::from_vec(vec![1, 2, 3]).is_err());
+    }
+
+    #[test]
+    fn is_empty() {
+        let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+        assert_eq!(data.is_empty(), false);
+    }
+
+    #[test]
+    fn as_vec() {
+        let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+        assert_eq!(data.as_vec(), &vec![1u8, 2]);
+    }
+
+    #[test]
+    fn as_slice() {
+        let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+        assert_eq!(data.as_slice(), &[1u8, 2]);
+    }
+
+    #[test]
+    fn len() {
+        let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+        assert_eq!(data.len(), 2);
+    }
+
+    #[test]
+    fn first() {
+        let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+        assert_eq!(data.first(), &1u8);
+    }
+
+    #[test]
+    fn last() {
+        let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+        assert_eq!(data.last(), &2u8);
+    }
+
+    #[test]
+    fn mapped() {
+        let data: BoundedVec<u8, 2, 8> = [1u8, 2].into();
+        let data = data.mapped(|x| x * 2);
+        assert_eq!(data, [2u8, 4].into());
+    }
+
+    #[test]
+    fn mapped_ref() {
+        let data: BoundedVec<u8, 2, 8> = [1u8, 2].into();
+        let data = data.mapped_ref(|x| x * 2);
+        assert_eq!(data, [2u8, 4].into());
+    }
+
+    #[test]
+    fn get() {
+        let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+        assert_eq!(data.get(1).unwrap(), &2u8);
+        assert!(data.get(3).is_none());
     }
 }

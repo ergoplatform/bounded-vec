@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+
+### Added
+- `BoundedVec::try_mapped`,  `BoundedVec::try_mapped_ref`;
+
 ## [0.1.0] - 2021-05-10
 
 - initial `BoundedVec` implementation including `mapped()`, `first()`, `last()`, to/from array/`Vec`;

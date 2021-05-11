@@ -2,7 +2,7 @@
 [![Latest Version](https://img.shields.io/crates/v/bounded-vec.svg)](https://crates.io/crates/bounded-vec) [![Documentation](https://docs.rs/bounded-vec/badge.svg)](https://docs.rs/crate/bounded-vec)
 
 ## bounded-vec
-`BoundedVec<T, L, U>` - Non-empty rust `std::vec::Vec` wrapper with type guarantees on lower(`L`) and upper(`U`) bounds for items quantity.
+`BoundedVec<T, L, U>` - Non-empty rust `std::vec::Vec` wrapper with type guarantees on lower(`L`) and upper(`U`) bounds for items quantity. Inspired by [vec1](https://github.com/rustonaut/vec1).
 
 ## Example
 

@@ -194,6 +194,76 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
         }
     }
 
+    /// Create a new `BoundedVec` by consuming `self` and mapping each element
+    /// to a `Result`.
+    ///
+    /// This is useful as it keeps the knowledge that the length is preserved
+    /// even through the old `BoundedVec` is consumed and turned into an iterator.
+    ///
+    /// As this method consumes self, returning an error means that this
+    /// vec is dropped. I.e. this method behaves roughly like using a
+    /// chain of `into_iter()`, `map`, `collect::<Result<Vec<N>,E>>` and
+    /// then converting the `Vec` back to a `Vec1`.
+    ///
+    ///
+    /// # Errors
+    ///
+    /// Once any call to `map_fn` returns a error that error is directly
+    /// returned by this method.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bounded_vec::BoundedVec;
+    /// let data: BoundedVec<u8, 2, 8> = [1u8,2].into();
+    /// let data: Result<BoundedVec<u8, 2, 8>, _> = data.try_mapped(|x| Err("failed"));
+    /// assert_eq!(data, Err("failed"));
+    /// ```
+    pub fn try_mapped<F, N, E>(self, map_fn: F) -> Result<BoundedVec<N, L, U>, E>
+    where
+        F: FnMut(T) -> Result<N, E>,
+    {
+        let mut map_fn = map_fn;
+        let mut out = Vec::with_capacity(self.len());
+        for element in self.inner.into_iter() {
+            out.push(map_fn(element)?);
+        }
+        #[allow(clippy::unwrap_used)]
+        Ok(BoundedVec::from_vec(out).unwrap())
+    }
+
+    /// Create a new `BoundedVec` by mapping references of `self` elements
+    /// to a `Result`.
+    ///
+    /// This is useful as it keeps the knowledge that the length is preserved
+    /// even through the old `BoundedVec` is consumed and turned into an iterator.
+    ///
+    /// # Errors
+    ///
+    /// Once any call to `map_fn` returns a error that error is directly
+    /// returned by this method.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bounded_vec::BoundedVec;
+    /// let data: BoundedVec<u8, 2, 8> = [1u8,2].into();
+    /// let data: Result<BoundedVec<u8, 2, 8>, _> = data.try_mapped_ref(|x| Err("failed"));
+    /// assert_eq!(data, Err("failed"));
+    /// ```
+    pub fn try_mapped_ref<F, N, E>(&self, map_fn: F) -> Result<BoundedVec<N, L, U>, E>
+    where
+        F: FnMut(&T) -> Result<N, E>,
+    {
+        let mut map_fn = map_fn;
+        let mut out = Vec::with_capacity(self.len());
+        for element in self.inner.iter() {
+            out.push(map_fn(element)?);
+        }
+        #[allow(clippy::unwrap_used)]
+        Ok(BoundedVec::from_vec(out).unwrap())
+    }
+
     /// Returns a reference for an element at index or `None` if out of bounds
     ///
     /// # Example
@@ -305,5 +375,33 @@ mod tests {
         let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
         assert_eq!(data.get(1).unwrap(), &2u8);
         assert!(data.get(3).is_none());
+    }
+
+    #[test]
+    fn try_mapped() {
+        let data: BoundedVec<u8, 2, 8> = [1u8, 2].into();
+        let data = data.try_mapped(|x| 100u8.checked_div(x).ok_or("error"));
+        assert_eq!(data, Ok([100u8, 50].into()));
+    }
+
+    #[test]
+    fn try_mapped_error() {
+        let data: BoundedVec<u8, 2, 8> = [0u8, 2].into();
+        let data = data.try_mapped(|x| 100u8.checked_div(x).ok_or("error"));
+        assert_eq!(data, Err("error"));
+    }
+
+    #[test]
+    fn try_mapped_ref() {
+        let data: BoundedVec<u8, 2, 8> = [1u8, 2].into();
+        let data = data.try_mapped_ref(|x| 100u8.checked_div(*x).ok_or("error"));
+        assert_eq!(data, Ok([100u8, 50].into()));
+    }
+
+    #[test]
+    fn try_mapped_ref_error() {
+        let data: BoundedVec<u8, 2, 8> = [0u8, 2].into();
+        let data = data.try_mapped_ref(|x| 100u8.checked_div(*x).ok_or("error"));
+        assert_eq!(data, Err("error"));
     }
 }

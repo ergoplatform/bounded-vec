@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::slice::{Iter, IterMut};
 use std::vec;
 
@@ -293,6 +293,17 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
     pub fn split_last(&self) -> (&T, &[T]) {
         #[allow(clippy::unwrap_used)]
         self.inner.split_last().unwrap()
+    }
+
+    /// Return a new BoundedVec with indices included
+    pub fn enumerated(self) -> BoundedVec<(usize, T), L, U> {
+        #[allow(clippy::unwrap_used)]
+        self.inner
+            .into_iter()
+            .enumerate()
+            .collect::<Vec<(usize, T)>>()
+            .try_into()
+            .unwrap()
     }
 }
 

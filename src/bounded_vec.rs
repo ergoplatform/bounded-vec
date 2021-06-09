@@ -454,4 +454,17 @@ mod tests {
         let data = data.try_mapped_ref(|x| 100u8.checked_div(*x).ok_or("error"));
         assert_eq!(data, Err("error"));
     }
+
+    #[test]
+    fn split_last() {
+        let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+        assert_eq!(data.split_last(), (&2u8, [1u8].as_ref()));
+    }
+
+    #[test]
+    fn enumerated() {
+        let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+        let expected: BoundedVec<_, 2, 8> = vec![(0, 1u8), (1, 2)].try_into().unwrap();
+        assert_eq!(data.enumerated(), expected);
+    }
 }

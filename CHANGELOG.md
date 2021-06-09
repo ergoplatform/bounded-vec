@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+
+### Added 
+- `IntoIter` impl for `BoundedVec`;
+- `BoundedVec::enumerated` (return new instance with indices included);
+- `BoundedVec::split_last` (return last and all the rest of the elements);
+
 ## [0.2.0] - 2021-05-11
 
 ### Added

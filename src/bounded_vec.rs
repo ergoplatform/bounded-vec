@@ -1,5 +1,6 @@
-use std::convert::TryFrom;
-use std::slice::Iter;
+use std::convert::{TryFrom, TryInto};
+use std::slice::{Iter, IterMut};
+use std::vec;
 
 /// Non-empty Vec bounded with minimal (L - lower bound) and maximal (U - upper bound) items quantity
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -278,9 +279,31 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
         self.inner.get(index)
     }
 
-    /// Get an iterator
+    /// Returns an iterator
     pub fn iter(&self) -> Iter<T> {
         self.inner.iter()
+    }
+
+    /// Returns an iterator that allows to modify each value
+    pub fn iter_mut(&mut self) -> IterMut<T> {
+        self.inner.iter_mut()
+    }
+
+    /// Returns the last and all the rest of the elements
+    pub fn split_last(&self) -> (&T, &[T]) {
+        #[allow(clippy::unwrap_used)]
+        self.inner.split_last().unwrap()
+    }
+
+    /// Return a new BoundedVec with indices included
+    pub fn enumerated(self) -> BoundedVec<(usize, T), L, U> {
+        #[allow(clippy::unwrap_used)]
+        self.inner
+            .into_iter()
+            .enumerate()
+            .collect::<Vec<(usize, T)>>()
+            .try_into()
+            .unwrap()
     }
 }
 
@@ -302,6 +325,33 @@ impl<T, const L: usize, const U: usize> From<[T; L]> for BoundedVec<T, L, U> {
 impl<T, const L: usize, const U: usize> From<BoundedVec<T, L, U>> for Vec<T> {
     fn from(v: BoundedVec<T, L, U>) -> Self {
         v.inner
+    }
+}
+
+impl<T, const L: usize, const U: usize> IntoIterator for BoundedVec<T, L, U> {
+    type Item = T;
+    type IntoIter = vec::IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.inner.into_iter()
+    }
+}
+
+impl<'a, T, const L: usize, const U: usize> IntoIterator for &'a BoundedVec<T, L, U> {
+    type Item = &'a T;
+    type IntoIter = core::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&self.inner).iter()
+    }
+}
+
+impl<'a, T, const L: usize, const U: usize> IntoIterator for &'a mut BoundedVec<T, L, U> {
+    type Item = &'a mut T;
+    type IntoIter = core::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&mut self.inner).iter_mut()
     }
 }
 
@@ -403,5 +453,35 @@ mod tests {
         let data: BoundedVec<u8, 2, 8> = [0u8, 2].into();
         let data = data.try_mapped_ref(|x| 100u8.checked_div(*x).ok_or("error"));
         assert_eq!(data, Err("error"));
+    }
+
+    #[test]
+    fn split_last() {
+        let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+        assert_eq!(data.split_last(), (&2u8, [1u8].as_ref()));
+        let data1: BoundedVec<_, 1, 8> = vec![1u8].try_into().unwrap();
+        assert_eq!(data1.split_last(), (&1u8, Vec::new().as_ref()));
+    }
+
+    #[test]
+    fn enumerated() {
+        let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+        let expected: BoundedVec<_, 2, 8> = vec![(0, 1u8), (1, 2)].try_into().unwrap();
+        assert_eq!(data.enumerated(), expected);
+    }
+
+    #[test]
+    fn into_iter() {
+        let mut vec = vec![1u8, 2];
+        let mut data: BoundedVec<_, 2, 8> = vec.clone().try_into().unwrap();
+        assert_eq!(data.clone().into_iter().collect::<Vec<u8>>(), vec);
+        assert_eq!(
+            data.iter().collect::<Vec<&u8>>(),
+            vec.iter().collect::<Vec<&u8>>()
+        );
+        assert_eq!(
+            data.iter_mut().collect::<Vec<&mut u8>>(),
+            vec.iter_mut().collect::<Vec<&mut u8>>()
+        );
     }
 }

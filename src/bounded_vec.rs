@@ -472,8 +472,16 @@ mod tests {
 
     #[test]
     fn into_iter() {
-        let vec = vec![1u8, 2];
-        let data: BoundedVec<_, 2, 8> = vec.clone().try_into().unwrap();
-        assert_eq!(data.into_iter().collect::<Vec<u8>>(), vec);
+        let mut vec = vec![1u8, 2];
+        let mut data: BoundedVec<_, 2, 8> = vec.clone().try_into().unwrap();
+        assert_eq!(data.clone().into_iter().collect::<Vec<u8>>(), vec);
+        assert_eq!(
+            data.iter().collect::<Vec<&u8>>(),
+            vec.iter().collect::<Vec<&u8>>()
+        );
+        assert_eq!(
+            data.iter_mut().collect::<Vec<&mut u8>>(),
+            vec.iter_mut().collect::<Vec<&mut u8>>()
+        );
     }
 }

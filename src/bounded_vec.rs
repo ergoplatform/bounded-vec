@@ -288,6 +288,12 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
     pub fn iter_mut(&mut self) -> IterMut<T> {
         self.inner.iter_mut()
     }
+
+    /// Returns the last and all the rest of the elements
+    pub fn split_last(&self) -> (&T, &[T]) {
+        #[allow(clippy::unwrap_used)]
+        self.inner.split_last().unwrap()
+    }
 }
 
 impl<T, const L: usize, const U: usize> TryFrom<Vec<T>> for BoundedVec<T, L, U> {

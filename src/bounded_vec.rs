@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
-use std::slice::Iter;
+use std::slice::{Iter, IterMut};
+use std::vec;
 
 /// Non-empty Vec bounded with minimal (L - lower bound) and maximal (U - upper bound) items quantity
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -278,9 +279,14 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
         self.inner.get(index)
     }
 
-    /// Get an iterator
+    /// Returns an iterator
     pub fn iter(&self) -> Iter<T> {
         self.inner.iter()
+    }
+
+    /// Returns an iterator that allows to modify each value
+    pub fn iter_mut(&mut self) -> IterMut<T> {
+        self.inner.iter_mut()
     }
 }
 
@@ -302,6 +308,33 @@ impl<T, const L: usize, const U: usize> From<[T; L]> for BoundedVec<T, L, U> {
 impl<T, const L: usize, const U: usize> From<BoundedVec<T, L, U>> for Vec<T> {
     fn from(v: BoundedVec<T, L, U>) -> Self {
         v.inner
+    }
+}
+
+impl<T, const L: usize, const U: usize> IntoIterator for BoundedVec<T, L, U> {
+    type Item = T;
+    type IntoIter = vec::IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.inner.into_iter()
+    }
+}
+
+impl<'a, T, const L: usize, const U: usize> IntoIterator for &'a BoundedVec<T, L, U> {
+    type Item = &'a T;
+    type IntoIter = core::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&self.inner).iter()
+    }
+}
+
+impl<'a, T, const L: usize, const U: usize> IntoIterator for &'a mut BoundedVec<T, L, U> {
+    type Item = &'a mut T;
+    type IntoIter = core::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&mut self.inner).iter_mut()
     }
 }
 

@@ -459,6 +459,8 @@ mod tests {
     fn split_last() {
         let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
         assert_eq!(data.split_last(), (&2u8, [1u8].as_ref()));
+        let data1: BoundedVec<_, 1, 8> = vec![1u8].try_into().unwrap();
+        assert_eq!(data1.split_last(), (&1u8, Vec::new().as_ref()));
     }
 
     #[test]

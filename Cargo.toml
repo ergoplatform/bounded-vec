@@ -11,6 +11,6 @@ repository = "https://github.com/ergoplatform/bounded-vec"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-
+thiserror = "1"
 
 [dev-dependencies]

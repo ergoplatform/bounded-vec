@@ -1,6 +1,7 @@
 use std::convert::{TryFrom, TryInto};
 use std::slice::{Iter, IterMut};
 use std::vec;
+use thiserror::Error;
 
 /// Non-empty Vec bounded with minimal (L - lower bound) and maximal (U - upper bound) items quantity
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -19,9 +20,10 @@ pub struct BoundedVec<T, const L: usize, const U: usize>
 // impl IsTrue for Assert<true> {}
 
 /// BoundedVec errors
-#[derive(Debug)]
+#[derive(Error, PartialEq, Eq, Debug, Clone)]
 pub enum BoundedVecOutOfBounds {
     /// Items quantity is less than L (lower bound)
+    #[error("Lower bound violation: got {got} (expected >= {lower_bound})")]
     LowerBoundError {
         /// L (lower bound)
         lower_bound: usize,
@@ -29,6 +31,7 @@ pub enum BoundedVecOutOfBounds {
         got: usize,
     },
     /// Items quantity is more than U (upper bound)
+    #[error("Upper bound violation: got {got} (expected <= {upper_bound})")]
     UpperBoundError {
         /// U (upper bound)
         upper_bound: usize,

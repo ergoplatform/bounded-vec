@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased] - ReleaseDate
 
 ### Added
-- `AsRef`, `AsMut`, `Hash`, `Ord`, `PartialOrd` impl;
-
+- `AsRef`, `AsMut`, `Hash`, `Ord`, `PartialOrd` impl for BoundedVec;
+- `Error` impl for BoundedVecOutOfBounds;
 
 ## [0.3.0] - 2021-06-09
 

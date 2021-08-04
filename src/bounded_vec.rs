@@ -4,7 +4,7 @@ use std::vec;
 use thiserror::Error;
 
 /// Non-empty Vec bounded with minimal (L - lower bound) and maximal (U - upper bound) items quantity
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone, Hash, PartialOrd, Ord)]
 pub struct BoundedVec<T, const L: usize, const U: usize>
 // enable when feature(const_evaluatable_checked) is stable
 // where
@@ -355,6 +355,30 @@ impl<'a, T, const L: usize, const U: usize> IntoIterator for &'a mut BoundedVec<
 
     fn into_iter(self) -> Self::IntoIter {
         (&mut self.inner).iter_mut()
+    }
+}
+
+impl<T, const L: usize, const U: usize> AsRef<Vec<T>> for BoundedVec<T, L, U> {
+    fn as_ref(&self) -> &Vec<T> {
+        self.inner.as_ref()
+    }
+}
+
+impl<T, const L: usize, const U: usize> AsRef<[T]> for BoundedVec<T, L, U> {
+    fn as_ref(&self) -> &[T] {
+        self.inner.as_ref()
+    }
+}
+
+impl<T, const L: usize, const U: usize> AsMut<Vec<T>> for BoundedVec<T, L, U> {
+    fn as_mut(&mut self) -> &mut Vec<T> {
+        self.inner.as_mut()
+    }
+}
+
+impl<T, const L: usize, const U: usize> AsMut<[T]> for BoundedVec<T, L, U> {
+    fn as_mut(&mut self) -> &mut [T] {
+        self.inner.as_mut()
     }
 }
 

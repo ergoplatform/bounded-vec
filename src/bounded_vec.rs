@@ -360,7 +360,7 @@ impl<'a, T, const L: usize, const U: usize> IntoIterator for &'a mut BoundedVec<
 
 impl<T, const L: usize, const U: usize> AsRef<Vec<T>> for BoundedVec<T, L, U> {
     fn as_ref(&self) -> &Vec<T> {
-        self.inner.as_ref()
+        &self.inner
     }
 }
 
@@ -400,7 +400,7 @@ mod tests {
     #[test]
     fn is_empty() {
         let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-        assert_eq!(data.is_empty(), false);
+        assert!(!data.is_empty());
     }
 
     #[test]

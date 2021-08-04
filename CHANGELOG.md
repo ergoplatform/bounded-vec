@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+
+### Added
+- `AsRef`, `AsMut`, `Hash`, `Ord`, `PartialOrd` impl;
+
+
 ## [0.3.0] - 2021-06-09
 
 ### Added 

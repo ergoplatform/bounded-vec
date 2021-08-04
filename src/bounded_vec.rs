@@ -1,9 +1,10 @@
 use std::convert::{TryFrom, TryInto};
 use std::slice::{Iter, IterMut};
 use std::vec;
+use thiserror::Error;
 
 /// Non-empty Vec bounded with minimal (L - lower bound) and maximal (U - upper bound) items quantity
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone, Hash, PartialOrd, Ord)]
 pub struct BoundedVec<T, const L: usize, const U: usize>
 // enable when feature(const_evaluatable_checked) is stable
 // where
@@ -19,9 +20,10 @@ pub struct BoundedVec<T, const L: usize, const U: usize>
 // impl IsTrue for Assert<true> {}
 
 /// BoundedVec errors
-#[derive(Debug)]
+#[derive(Error, PartialEq, Eq, Debug, Clone)]
 pub enum BoundedVecOutOfBounds {
     /// Items quantity is less than L (lower bound)
+    #[error("Lower bound violation: got {got} (expected >= {lower_bound})")]
     LowerBoundError {
         /// L (lower bound)
         lower_bound: usize,
@@ -29,6 +31,7 @@ pub enum BoundedVecOutOfBounds {
         got: usize,
     },
     /// Items quantity is more than U (upper bound)
+    #[error("Upper bound violation: got {got} (expected <= {upper_bound})")]
     UpperBoundError {
         /// U (upper bound)
         upper_bound: usize,
@@ -355,6 +358,30 @@ impl<'a, T, const L: usize, const U: usize> IntoIterator for &'a mut BoundedVec<
     }
 }
 
+impl<T, const L: usize, const U: usize> AsRef<Vec<T>> for BoundedVec<T, L, U> {
+    fn as_ref(&self) -> &Vec<T> {
+        &self.inner
+    }
+}
+
+impl<T, const L: usize, const U: usize> AsRef<[T]> for BoundedVec<T, L, U> {
+    fn as_ref(&self) -> &[T] {
+        self.inner.as_ref()
+    }
+}
+
+impl<T, const L: usize, const U: usize> AsMut<Vec<T>> for BoundedVec<T, L, U> {
+    fn as_mut(&mut self) -> &mut Vec<T> {
+        self.inner.as_mut()
+    }
+}
+
+impl<T, const L: usize, const U: usize> AsMut<[T]> for BoundedVec<T, L, U> {
+    fn as_mut(&mut self) -> &mut [T] {
+        self.inner.as_mut()
+    }
+}
+
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 mod tests {
@@ -373,7 +400,7 @@ mod tests {
     #[test]
     fn is_empty() {
         let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-        assert_eq!(data.is_empty(), false);
+        assert!(!data.is_empty());
     }
 
     #[test]

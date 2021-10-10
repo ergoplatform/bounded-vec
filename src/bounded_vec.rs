@@ -1,3 +1,5 @@
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::slice::{Iter, IterMut};
 use std::vec;
@@ -5,6 +7,7 @@ use thiserror::Error;
 
 /// Non-empty Vec bounded with minimal (L - lower bound) and maximal (U - upper bound) items quantity
 #[derive(PartialEq, Eq, Debug, Clone, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
 pub struct BoundedVec<T, const L: usize, const U: usize>
 // enable when feature(const_evaluatable_checked) is stable
 // where

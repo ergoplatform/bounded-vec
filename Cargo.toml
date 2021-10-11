@@ -12,5 +12,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 thiserror = "1"
+serde = {version = "1.0.123", features = ["derive"], optional = true}
 
 [dev-dependencies]

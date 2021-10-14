@@ -19,6 +19,9 @@ let data = data.mapped(|x|x*2);
 assert_eq!(data, [2u8,4].into());
 ```
 
+## Crate features
+- optional(non-default) `serde` feature that adds serialization to `BoundedVec`.
+
 ## Changelog
 See [CHANGELOG.md](CHANGELOG.md).
 

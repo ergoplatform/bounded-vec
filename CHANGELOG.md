@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+
+### Added
+- `serde` optional feature;
+
 ## [0.4.0] - 2021-08-04
 
 ### Added

@@ -313,6 +313,9 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
     }
 }
 
+/// A non-empty Vec with no effective upper-bound on its length
+pub type NonEmptyVec<T> = BoundedVec<T, 1, { usize::MAX }>;
+
 impl<T, const L: usize, const U: usize> TryFrom<Vec<T>> for BoundedVec<T, L, U> {
     type Error = BoundedVecOutOfBounds;
 

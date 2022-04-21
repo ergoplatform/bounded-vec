@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+
+### Added
+- `NonEmptyVec` type alias;
+
 ## [0.5.0] - 2021-10-14
 
 ### Added

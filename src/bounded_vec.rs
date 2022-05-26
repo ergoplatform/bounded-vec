@@ -8,6 +8,7 @@ use thiserror::Error;
 /// Non-empty Vec bounded with minimal (L - lower bound) and maximal (U - upper bound) items quantity
 #[derive(PartialEq, Eq, Debug, Clone, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
+#[cfg_attr(feature = "proptest_derive", derive(proptest_derive::Arbitrary))]
 pub struct BoundedVec<T, const L: usize, const U: usize>
 // enable when feature(const_evaluatable_checked) is stable
 // where

@@ -86,6 +86,20 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
         &self.inner
     }
 
+    /// Returns an underlying `Vec``
+    ///
+    /// # Example
+    /// ```
+    /// use bounded_vec::BoundedVec;
+    /// use std::convert::TryInto;
+    ///
+    /// let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
+    /// assert_eq!(data.to_vec(), vec![1u8,2]);
+    /// ```
+    pub fn to_vec(self) -> Vec<T> {
+        self.into()
+    }
+
     /// Returns the number of elements in the vector
     ///
     /// # Example
@@ -312,6 +326,15 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
             .try_into()
             .unwrap()
     }
+
+    /// Return a Some(BoundedVec) or None if `v` is empty
+    pub fn opt_empty_vec(v: Vec<T>) -> Result<Option<BoundedVec<T, L, U>>, BoundedVecOutOfBounds> {
+        if v.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(BoundedVec::from_vec(v)?))
+        }
+    }
 }
 
 /// A non-empty Vec with no effective upper-bound on its length
@@ -386,6 +409,18 @@ impl<T, const L: usize, const U: usize> AsMut<Vec<T>> for BoundedVec<T, L, U> {
 impl<T, const L: usize, const U: usize> AsMut<[T]> for BoundedVec<T, L, U> {
     fn as_mut(&mut self) -> &mut [T] {
         self.inner.as_mut()
+    }
+}
+
+/// Option<BoundedVec<T, _, _>> to Vec<T>
+pub trait OptBoundedVecToVec<T> {
+    /// Option<BoundedVec<T, _, _>> to Vec<T>
+    fn to_vec(self) -> Vec<T>;
+}
+
+impl<T, const U: usize, const L: usize> OptBoundedVecToVec<T> for Option<BoundedVec<T, U, L>> {
+    fn to_vec(self) -> Vec<T> {
+        self.map(|bv| bv.into()).unwrap_or_default()
     }
 }
 
@@ -517,5 +552,15 @@ mod tests {
             data.iter_mut().collect::<Vec<&mut u8>>(),
             vec.iter_mut().collect::<Vec<&mut u8>>()
         );
+    }
+
+    #[test]
+    fn try_opt_empty_vec_roundtrip() {
+        let opt_bv_none = BoundedVec::<u8, 2, 8>::opt_empty_vec(vec![]).unwrap();
+        assert!(opt_bv_none.is_none());
+        assert_eq!(opt_bv_none.to_vec(), vec![]);
+        let opt_bv_some = BoundedVec::<u8, 2, 8>::opt_empty_vec(vec![0u8, 2]).unwrap();
+        assert!(opt_bv_some.is_some());
+        assert_eq!(opt_bv_some.to_vec(), vec![0u8, 2]);
     }
 }

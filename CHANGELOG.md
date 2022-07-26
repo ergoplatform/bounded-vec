@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+
+
+### Added
+- `Abrbitrary` impl behind `arbitrary` feature;
+- `BoundedVec::opt_empty_vec()` - empty `Vec<T>` to `Option<BoundedVec<T>>`;
+- `Option<BoundedVec>::to_vec()` to get `Vec<T>`;
+
 ## [0.6.0] - 2022-04-21
 
 ### Added

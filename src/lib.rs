@@ -9,7 +9,7 @@
 #![deny(dead_code)]
 #![deny(unused_imports)]
 #![deny(missing_docs)]
-#![deny(broken_intra_doc_links)]
+#![deny(rustdoc::broken_intra_doc_links)]
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
 

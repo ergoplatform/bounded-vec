@@ -328,6 +328,18 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
     }
 
     /// Return a Some(BoundedVec) or None if `v` is empty
+    /// # Example
+    /// ```
+    /// use bounded_vec::BoundedVec;
+    /// use bounded_vec::OptBoundedVecToVec;
+    ///
+    /// let opt_bv_none = BoundedVec::<u8, 2, 8>::opt_empty_vec(vec![]).unwrap();
+    /// assert!(opt_bv_none.is_none());
+    /// assert_eq!(opt_bv_none.to_vec(), vec![]);
+    /// let opt_bv_some = BoundedVec::<u8, 2, 8>::opt_empty_vec(vec![0u8, 2]).unwrap();
+    /// assert!(opt_bv_some.is_some());
+    /// assert_eq!(opt_bv_some.to_vec(), vec![0u8, 2]);
+    /// ```
     pub fn opt_empty_vec(v: Vec<T>) -> Result<Option<BoundedVec<T, L, U>>, BoundedVecOutOfBounds> {
         if v.is_empty() {
             Ok(None)
@@ -552,15 +564,5 @@ mod tests {
             data.iter_mut().collect::<Vec<&mut u8>>(),
             vec.iter_mut().collect::<Vec<&mut u8>>()
         );
-    }
-
-    #[test]
-    fn try_opt_empty_vec_roundtrip() {
-        let opt_bv_none = BoundedVec::<u8, 2, 8>::opt_empty_vec(vec![]).unwrap();
-        assert!(opt_bv_none.is_none());
-        assert_eq!(opt_bv_none.to_vec(), vec![]);
-        let opt_bv_some = BoundedVec::<u8, 2, 8>::opt_empty_vec(vec![0u8, 2]).unwrap();
-        assert!(opt_bv_some.is_some());
-        assert_eq!(opt_bv_some.to_vec(), vec![0u8, 2]);
     }
 }

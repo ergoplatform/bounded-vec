@@ -8,7 +8,6 @@ use thiserror::Error;
 /// Non-empty Vec bounded with minimal (L - lower bound) and maximal (U - upper bound) items quantity
 #[derive(PartialEq, Eq, Debug, Clone, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
-#[cfg_attr(feature = "arbitrary", derive(proptest_derive::Arbitrary))]
 pub struct BoundedVec<T, const L: usize, const U: usize>
 // enable when feature(const_evaluatable_checked) is stable
 // where
@@ -430,9 +429,34 @@ pub trait OptBoundedVecToVec<T> {
     fn to_vec(self) -> Vec<T>;
 }
 
-impl<T, const U: usize, const L: usize> OptBoundedVecToVec<T> for Option<BoundedVec<T, U, L>> {
+impl<T, const L: usize, const U: usize> OptBoundedVecToVec<T> for Option<BoundedVec<T, L, U>> {
     fn to_vec(self) -> Vec<T> {
         self.map(|bv| bv.into()).unwrap_or_default()
+    }
+}
+
+#[allow(clippy::unwrap_used)]
+#[cfg(feature = "arbitrary")]
+mod arbitrary {
+
+    use super::*;
+    use proptest::collection::vec;
+    use proptest::prelude::Arbitrary;
+    use proptest::prelude::*;
+    use proptest::strategy::BoxedStrategy;
+
+    impl<T: Arbitrary, const L: usize, const U: usize> Arbitrary for BoundedVec<T, L, U>
+    where
+        T::Strategy: 'static,
+    {
+        type Strategy = BoxedStrategy<Self>;
+        type Parameters = ();
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            vec(any::<T>(), L..=U)
+                .prop_map(|items| BoundedVec::from_vec(items).unwrap())
+                .boxed()
+        }
     }
 }
 
@@ -564,5 +588,22 @@ mod tests {
             data.iter_mut().collect::<Vec<&mut u8>>(),
             vec.iter_mut().collect::<Vec<&mut u8>>()
         );
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+#[cfg(test)]
+#[allow(clippy::len_zero)]
+mod arb_tests {
+
+    use super::*;
+    use proptest::prelude::*;
+
+    proptest! {
+
+        #[test]
+        fn bounded_vec_length_bounded(v: BoundedVec<u8, 1, 2>) {
+            prop_assert!(1 <= v.len() && v.len() <= 2);
+        }
     }
 }

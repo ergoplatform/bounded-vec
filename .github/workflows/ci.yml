@@ -86,8 +86,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./lcov.info
 
-  test_serde:
-    name: Test on ${{ matrix.os }} with serde
+  test_all_features:
+    name: Test on ${{ matrix.os }} with all features
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -109,12 +109,12 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --verbose --release --tests --features serde
+          args: --verbose --release --tests --all-features
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --verbose --release --features serde
+          args: --verbose --release --all-features
         
   doc-links:
     name: Intra-documentation links

@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+### Added
+- fix `Abrbitrary` impl to honor upper(U) and lower(L) bounds;
+
 ## [0.7.0] - 2022-07-26
 
 

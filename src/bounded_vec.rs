@@ -9,18 +9,9 @@ use thiserror::Error;
 #[derive(PartialEq, Eq, Debug, Clone, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
 pub struct BoundedVec<T, const L: usize, const U: usize>
-// enable when feature(const_evaluatable_checked) is stable
-// where
-//     Assert<{ L > 0 }>: IsTrue,
 {
     inner: Vec<T>,
 }
-
-// enum Assert<const COND: bool> {}
-
-// trait IsTrue {}
-
-// impl IsTrue for Assert<true> {}
 
 /// BoundedVec errors
 #[derive(Error, PartialEq, Eq, Debug, Clone)]
@@ -52,9 +43,6 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
     /// let data: BoundedVec<_, 2, 8> = BoundedVec::from_vec(vec![1u8, 2]).unwrap();
     /// ```
     pub fn from_vec(items: Vec<T>) -> Result<Self, BoundedVecOutOfBounds> {
-        // remove when feature(const_evaluatable_checked) is stable
-        // and this requirement is encoded in type sig
-        assert!(L > 0);
         let len = items.len();
         if len < L {
             Err(BoundedVecOutOfBounds::LowerBoundError {
@@ -469,6 +457,7 @@ mod tests {
 
     #[test]
     fn from_vec() {
+        assert!(BoundedVec::<u8, 0, 1>::from_vec(vec![]).is_ok());
         assert!(BoundedVec::<u8, 2, 8>::from_vec(vec![1, 2]).is_ok());
         assert!(BoundedVec::<u8, 2, 8>::from_vec(vec![]).is_err());
         assert!(BoundedVec::<u8, 3, 8>::from_vec(vec![1, 2]).is_err());

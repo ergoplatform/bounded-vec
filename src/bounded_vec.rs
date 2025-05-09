@@ -138,7 +138,7 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
         self.inner.as_slice()
     }
 
-    /// Returns the first element of Vec
+    /// Returns the first element of non-empty Vec
     ///
     /// # Example
     /// ```
@@ -146,13 +146,15 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
     /// use std::convert::TryInto;
     ///
     /// let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-    /// assert_eq!(data.first(), Some(&1));
+    /// assert_eq!(*data.first(), 1);
     /// ```
-    pub fn first(&self) -> Option<&T> {
-        self.inner.first()
+    pub fn first(&self) -> &T {
+        const { assert!(L != 0) }
+        #[allow(clippy::unwrap_used)]
+        self.inner.first().unwrap()
     }
 
-    /// Returns the last element of Vec
+    // Returns the last element of Vec
     ///
     /// # Example
     /// ```
@@ -160,10 +162,12 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
     /// use std::convert::TryInto;
     ///
     /// let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-    /// assert_eq!(data.last(), Some(&2));
+    /// assert_eq!(*data.last(), 2);
     /// ```
-    pub fn last(&self) -> Option<&T> {
-        self.inner.last()
+    pub fn last(&self) -> &T {
+        const { assert!(L != 0) }
+        #[allow(clippy::unwrap_used)]
+        self.inner.last().unwrap()
     }
 
     /// Create a new `BoundedVec` by consuming `self` and mapping each element.
@@ -305,8 +309,10 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
     }
 
     /// Returns the last and all the rest of the elements
-    pub fn split_last(&self) -> Option<(&T, &[T])> {
-        self.inner.split_last()
+    pub fn split_last(&self) -> (&T, &[T]) {
+        const { assert!(L != 0) }
+        #[allow(clippy::unwrap_used)]
+        self.inner.split_last().unwrap()
     }
 
     /// Return a new BoundedVec with indices included
@@ -318,6 +324,62 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
             .collect::<Vec<(usize, T)>>()
             .try_into()
             .unwrap()
+    }
+
+    /// Return a Some(BoundedVec) or None if `v` is empty
+    /// # Example
+    /// ```
+    /// use bounded_vec::BoundedVec;
+    /// use bounded_vec::OptBoundedVecToVec;
+    ///
+    /// let opt_bv_none = BoundedVec::<u8, 2, 8>::opt_empty_vec(vec![]).unwrap();
+    /// assert!(opt_bv_none.is_none());
+    /// assert_eq!(opt_bv_none.to_vec(), vec![]);
+    /// let opt_bv_some = BoundedVec::<u8, 2, 8>::opt_empty_vec(vec![0u8, 2]).unwrap();
+    /// assert!(opt_bv_some.is_some());
+    /// assert_eq!(opt_bv_some.to_vec(), vec![0u8, 2]);
+    /// ```
+    pub fn opt_empty_vec(v: Vec<T>) -> Result<Option<BoundedVec<T, L, U>>, BoundedVecOutOfBounds> {
+        if v.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(BoundedVec::from_vec(v)?))
+        }
+    }
+}
+
+impl<T, const U: usize> BoundedVec<T, 0, U> {
+    /// Returns the first element of Vec
+    ///
+    /// # Example
+    /// ```
+    /// use bounded_vec::BoundedVec;
+    /// use std::convert::TryInto;
+    ///
+    /// let data: BoundedVec<_, 0, 8> = vec![1u8, 2].try_into().unwrap();
+    /// assert_eq!(data.try_first(), Some(&1));
+    /// ```
+    pub fn try_first(&self) -> Option<&T> {
+        self.inner.first()
+    }
+
+    /// Returns the last element of Vec
+    ///
+    /// # Example
+    /// ```
+    /// use bounded_vec::BoundedVec;
+    /// use std::convert::TryInto;
+    ///
+    /// let data: BoundedVec<_, 0, 8> = vec![1u8, 2].try_into().unwrap();
+    /// assert_eq!(data.try_last(), Some(&2));
+    /// ```
+    pub fn try_last(&self) -> Option<&T> {
+        self.inner.last()
+    }
+
+    /// Returns the last and all the rest of the elements
+    pub fn try_split_last(&self) -> Option<(&T, &[T])> {
+        self.inner.split_last()
     }
 }
 
@@ -359,7 +421,7 @@ impl<'a, T, const L: usize, const U: usize> IntoIterator for &'a BoundedVec<T, L
     type IntoIter = core::slice::Iter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&self.inner).iter()
+        self.inner.iter()
     }
 }
 
@@ -368,7 +430,7 @@ impl<'a, T, const L: usize, const U: usize> IntoIterator for &'a mut BoundedVec<
     type IntoIter = core::slice::IterMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&mut self.inner).iter_mut()
+        self.inner.iter_mut()
     }
 }
 
@@ -475,13 +537,29 @@ mod tests {
     #[test]
     fn first() {
         let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-        assert_eq!(data.first(), Some(&1u8));
+        assert_eq!(data.first(), &1u8);
     }
 
     #[test]
     fn last() {
         let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-        assert_eq!(data.last(), Some(&2u8));
+        assert_eq!(data.last(), &2u8);
+    }
+
+    #[test]
+    fn try_first() {
+        let data: BoundedVec<_, 0, 8> = vec![1u8, 2].try_into().unwrap();
+        assert_eq!(data.try_first(), Some(&1u8));
+        let data: BoundedVec<i32, 0, 8> = vec![].try_into().unwrap();
+        assert_eq!(data.try_first(), None);
+    }
+
+    #[test]
+    fn try_last() {
+        let data: BoundedVec<_, 0, 8> = vec![1u8, 2].try_into().unwrap();
+        assert_eq!(data.try_last(), Some(&2u8));
+        let data: BoundedVec<i32, 0, 8> = vec![].try_into().unwrap();
+        assert_eq!(data.try_last(), None);
     }
 
     #[test]
@@ -536,9 +614,19 @@ mod tests {
     #[test]
     fn split_last() {
         let data: BoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-        assert_eq!(data.split_last(), Some((&2u8, [1u8].as_ref())));
+        assert_eq!(data.split_last(), (&2u8, [1u8].as_ref()));
         let data1: BoundedVec<_, 1, 8> = vec![1u8].try_into().unwrap();
-        assert_eq!(data1.split_last(), Some((&1u8, Vec::new().as_ref())));
+        assert_eq!(data1.split_last(), (&1u8, Vec::new().as_ref()));
+    }
+
+    #[test]
+    fn try_split_last() {
+        let data: BoundedVec<_, 0, 8> = vec![1u8, 2].try_into().unwrap();
+        assert_eq!(data.try_split_last(), Some((&2u8, [1u8].as_ref())));
+        let data1: BoundedVec<_, 0, 8> = vec![1u8].try_into().unwrap();
+        assert_eq!(data1.try_split_last(), Some((&1u8, Vec::new().as_ref())));
+        let data2: BoundedVec<i32, 0, 8> = vec![].try_into().unwrap();
+        assert_eq!(data2.try_split_last(), None);
     }
 
     #[test]

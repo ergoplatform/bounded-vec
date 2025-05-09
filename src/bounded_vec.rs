@@ -1,13 +1,11 @@
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-use std::convert::{TryFrom, TryInto};
-use std::slice::{Iter, IterMut};
-use std::vec;
+use alloc::vec;
+use alloc::vec::Vec;
+use core::convert::{TryFrom, TryInto};
+use core::slice::{Iter, IterMut};
 use thiserror::Error;
 
 /// Bounded Vec with minimal (L - lower bound) and maximal (U - upper bound) items quantity
 #[derive(PartialEq, Eq, Debug, Clone, Hash, PartialOrd, Ord)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
 pub struct BoundedVec<T, const L: usize, const U: usize>
 // enable when feature(const_evaluatable_checked) is stable
 // where
@@ -334,7 +332,7 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U> {
     ///
     /// let opt_bv_none = BoundedVec::<u8, 2, 8>::opt_empty_vec(vec![]).unwrap();
     /// assert!(opt_bv_none.is_none());
-    /// assert_eq!(opt_bv_none.to_vec(), vec![]);
+    /// assert_eq!(opt_bv_none.to_vec(), Vec::<u8>::new());
     /// let opt_bv_some = BoundedVec::<u8, 2, 8>::opt_empty_vec(vec![0u8, 2]).unwrap();
     /// assert!(opt_bv_some.is_some());
     /// assert_eq!(opt_bv_some.to_vec(), vec![0u8, 2]);
@@ -495,10 +493,81 @@ mod arbitrary {
     }
 }
 
+#[cfg(feature = "serde")]
+mod serde_impl {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    // direct impl to unify serde in one place instead of doing attribute on declaration and deserialize here
+    impl<T: Serialize, const L: usize, const U: usize> Serialize for BoundedVec<T, L, U> {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            self.inner.serialize(serializer)
+        }
+    }
+
+    impl<'de, T: Deserialize<'de>, const L: usize, const U: usize> Deserialize<'de>
+        for BoundedVec<T, L, U>
+    {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            let inner = Vec::<T>::deserialize(deserializer)?;
+            if inner.len() < L {
+                return Err(serde::de::Error::custom(alloc::format!(
+                    "Lower bound violation: got {} (expected >= {})",
+                    inner.len(),
+                    L
+                )));
+            } else if inner.len() > U {
+                return Err(serde::de::Error::custom(alloc::format!(
+                    "Upper bound violation: got {} (expected <= {})",
+                    inner.len(),
+                    U
+                )));
+            };
+            Ok(BoundedVec { inner })
+        }
+    }
+
+    #[cfg(feature = "schema")]
+    mod schema {
+        use super::*;
+        use schemars::schema::{InstanceType, SchemaObject};
+        use schemars::JsonSchema;
+
+        // we cannot use attributes, because the do not work with `const`, only numeric literals supported
+        impl<T: JsonSchema, const L: usize, const U: usize> JsonSchema for BoundedVec<T, L, U> {
+            fn schema_name() -> alloc::string::String {
+                alloc::format!("BoundedVec{}Min{}Max{}", T::schema_name(), L, U)
+            }
+
+            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+                SchemaObject {
+                    instance_type: Some(InstanceType::Array.into()),
+                    array: Some(alloc::boxed::Box::new(schemars::schema::ArrayValidation {
+                        items: Some(schemars::schema::SingleOrVec::Single(
+                            T::json_schema(gen).into(),
+                        )),
+                        min_items: Some(L as u32),
+                        max_items: Some(U as u32),
+                        ..Default::default()
+                    })),
+                    ..Default::default()
+                }
+                .into()
+            }
+        }
+    }
+}
+
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 mod tests {
-    use std::convert::TryInto;
+    use core::convert::TryInto;
 
     use super::*;
 
@@ -658,6 +727,7 @@ mod tests {
 mod arb_tests {
 
     use super::*;
+    use alloc::format;
     use proptest::prelude::*;
 
     proptest! {

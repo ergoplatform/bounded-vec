@@ -1,5 +1,6 @@
 //! Non-empty Vec wrapper with lower and upper bounds on items quantity
 
+#![no_std]
 // Coding conventions
 #![forbid(unsafe_code)]
 #![deny(non_upper_case_globals)]
@@ -12,6 +13,8 @@
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
+
+extern crate alloc;
 
 mod bounded_vec;
 

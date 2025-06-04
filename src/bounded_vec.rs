@@ -650,29 +650,22 @@ mod serde_impl {
     #[cfg(feature = "schema")]
     mod schema {
         use super::*;
-        use schemars::schema::{InstanceType, SchemaObject};
+        use alloc::borrow::Cow;
         use schemars::JsonSchema;
 
         // we cannot use attributes, because the do not work with `const`, only numeric literals supported
         impl<T: JsonSchema, const L: usize, const U: usize> JsonSchema for BoundedVec<T, L, U> {
-            fn schema_name() -> alloc::string::String {
-                alloc::format!("BoundedVec{}Min{}Max{}", T::schema_name(), L, U)
+            fn schema_name() -> Cow<'static, str> {
+                alloc::format!("BoundedVec{}Min{}Max{}", T::schema_name(), L, U).into()
             }
 
-            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-                SchemaObject {
-                    instance_type: Some(InstanceType::Array.into()),
-                    array: Some(alloc::boxed::Box::new(schemars::schema::ArrayValidation {
-                        items: Some(schemars::schema::SingleOrVec::Single(
-                            T::json_schema(gen).into(),
-                        )),
-                        min_items: Some(L as u32),
-                        max_items: Some(U as u32),
-                        ..Default::default()
-                    })),
-                    ..Default::default()
-                }
-                .into()
+            fn json_schema(gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+                schemars::json_schema!({
+                    "type": "array",
+                    "items": T::json_schema(gen),
+                    "minItems": L as u32,
+                    "maxItems": L as u32
+                })
             }
         }
     }

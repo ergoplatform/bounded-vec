@@ -8,7 +8,7 @@ use thiserror::Error;
 ///
 /// # Type Parameters
 ///
-/// * `W` - witness type to prove vector ranges and shape if interface accordingly
+/// * `W` - witness type to prove vector ranges and shape of interface accordingly
 #[derive(PartialEq, Eq, Debug, Clone, Hash, PartialOrd, Ord)]
 pub struct BoundedVec<T, const L: usize, const U: usize, W = witnesses::NonEmpty<L, U>> {
     inner: Vec<T>,
@@ -149,7 +149,7 @@ impl<T, const U: usize> BoundedVec<T, 0, U, witnesses::Empty<U>> {
     }
 }
 
-/// Part which works for all witnesses
+/// Methods which works for all witnesses
 impl<T, const L: usize, const U: usize, W> BoundedVec<T, L, U, W> {
     /// Returns a reference to underlying `Vec``
     ///

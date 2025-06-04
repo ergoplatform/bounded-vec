@@ -3,6 +3,7 @@
 
 ## bounded-vec
 `BoundedVec<T, L, U>` - Non-empty rust `std::vec::Vec` wrapper with type guarantees on lower(`L`) and upper(`U`) bounds for items quantity. Inspired by [vec1](https://github.com/rustonaut/vec1).
+
 This crate is `#![no_std]` compatible with `alloc`.
 
 ## Example
@@ -21,8 +22,8 @@ assert_eq!(data, [2u8,4].into());
 ```
 
 ## Crate features
-- optional(non-default) `serde` feature that adds serialization to `BoundedVec`.
-- optional(non-default) `schema` feature that adds JSON schema support via `schemars` (requires `serde`).
+- optional(non-default) [serde](https://serde.rs/) feature that adds serialization to `BoundedVec`.
+- optional(non-default) `schema` feature that adds JSON schema support via [schemars](https://graham.cool/schemars) (requires `serde`).
 - optional(non-default) `arbitrary` feature that adds `proptest::Arbitrary` implementation to `BoundedVec`.
 
 ## Changelog

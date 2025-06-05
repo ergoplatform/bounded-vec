@@ -664,7 +664,7 @@ mod serde_impl {
                     "type": "array",
                     "items": T::json_schema(gen),
                     "minItems": L as u32,
-                    "maxItems": L as u32
+                    "maxItems": U as u32
                 })
             }
         }

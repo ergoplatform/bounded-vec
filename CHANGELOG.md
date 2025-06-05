@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
+
+### Added
 - prevent out of bound construction and define empty vs nonempty at compile time
 
 =======

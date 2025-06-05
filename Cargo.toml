@@ -23,3 +23,4 @@ arbitrary = ["proptest"]
 
 [dev-dependencies]
 proptest = { version = "1.0.0" }
+serde_json = "1.0.140"

@@ -12,7 +12,7 @@ use thiserror::Error;
 #[derive(PartialEq, Eq, Debug, Clone, Hash, PartialOrd, Ord)]
 pub struct BoundedVec<T, const L: usize, const U: usize, W = witnesses::NonEmpty<L, U>> {
     inner: Vec<T>,
-    _marker: core::marker::PhantomData<W>,
+    witness: W,
 }
 
 /// BoundedVec errors
@@ -41,12 +41,12 @@ pub mod witnesses {
 
     // NOTE: we can have proves if needed for some cases like 8/16/32/64 upper bound, so can make memory and serde more compile safe and efficient
 
-    /// Compile-time proof of valid bounds. Must be consturcted with same bounds to instantiate `BoundedVec`.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    /// Compile-time proof of valid bounds. Must be constructed with same bounds to instantiate `BoundedVec`.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct NonEmpty<const L: usize, const U: usize>(());
 
     /// Possibly empty vector with upper bound.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct Empty<const U: usize>(());
 
     /// Type a compile-time proof of valid bounds
@@ -88,7 +88,7 @@ impl<T, const U: usize> BoundedVec<T, 0, U, witnesses::Empty<U>> {
     ///     BoundedVec::<_, 0, 8, witnesses::Empty<8>>::from_vec(vec![1u8, 2]).unwrap();
     /// ```
     pub fn from_vec(items: Vec<T>) -> Result<Self, BoundedVecOutOfBounds> {
-        let _witness = witnesses::empty::<U>();
+        let witness = witnesses::empty::<U>();
         let len = items.len();
         if len > U {
             Err(BoundedVecOutOfBounds::UpperBoundError {
@@ -98,7 +98,7 @@ impl<T, const U: usize> BoundedVec<T, 0, U, witnesses::Empty<U>> {
         } else {
             Ok(BoundedVec {
                 inner: items,
-                _marker: core::marker::PhantomData,
+                witness,
             })
         }
     }
@@ -238,7 +238,7 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U, witnesses::NonEmpty<
     ///     BoundedVec::<_, 2, 8, witnesses::NonEmpty<2, 8>>::from_vec(vec![1u8, 2]).unwrap();
     /// ```
     pub fn from_vec(items: Vec<T>) -> Result<Self, BoundedVecOutOfBounds> {
-        let _witness = witnesses::non_empty::<L, U>();
+        let witness = witnesses::non_empty::<L, U>();
         let len = items.len();
         if len < L {
             Err(BoundedVecOutOfBounds::LowerBoundError {
@@ -253,7 +253,7 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U, witnesses::NonEmpty<
         } else {
             Ok(BoundedVec {
                 inner: items,
-                _marker: core::marker::PhantomData,
+                witness,
             })
         }
     }
@@ -321,7 +321,7 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U, witnesses::NonEmpty<
     {
         BoundedVec {
             inner: self.inner.into_iter().map(map_fn).collect::<Vec<_>>(),
-            _marker: core::marker::PhantomData,
+            witness: self.witness,
         }
     }
 
@@ -344,7 +344,7 @@ impl<T, const L: usize, const U: usize> BoundedVec<T, L, U, witnesses::NonEmpty<
     {
         BoundedVec {
             inner: self.inner.iter().map(map_fn).collect::<Vec<_>>(),
-            _marker: core::marker::PhantomData,
+            witness: self.witness,
         }
     }
 
@@ -500,7 +500,7 @@ impl<T, const L: usize, const U: usize> From<[T; L]>
     fn from(arr: [T; L]) -> Self {
         BoundedVec {
             inner: arr.into(),
-            _marker: core::marker::PhantomData,
+            witness: witnesses::non_empty(),
         }
     }
 }
@@ -610,7 +610,7 @@ mod serde_impl {
     use serde::{Deserialize, Serialize};
 
     // direct impl to unify serde in one place instead of doing attribute on declaration and deserialize here
-    impl<T: Serialize, const L: usize, const U: usize> Serialize for BoundedVec<T, L, U> {
+    impl<T: Serialize, const L: usize, const U: usize, W> Serialize for BoundedVec<T, L, U, W> {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: serde::Serializer,
@@ -627,23 +627,17 @@ mod serde_impl {
             D: serde::Deserializer<'de>,
         {
             let inner = Vec::<T>::deserialize(deserializer)?;
-            if inner.len() < L {
-                return Err(serde::de::Error::custom(alloc::format!(
-                    "Lower bound violation: got {} (expected >= {})",
-                    inner.len(),
-                    L
-                )));
-            } else if inner.len() > U {
-                return Err(serde::de::Error::custom(alloc::format!(
-                    "Upper bound violation: got {} (expected <= {})",
-                    inner.len(),
-                    U
-                )));
-            };
-            Ok(BoundedVec {
-                inner,
-                _marker: core::marker::PhantomData,
-            })
+            BoundedVec::<T, L, U>::from_vec(inner).map_err(serde::de::Error::custom)
+        }
+    }
+
+    impl<'de, T: Deserialize<'de>, const U: usize> Deserialize<'de> for EmptyBoundedVec<T, U> {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            let inner = Vec::<T>::deserialize(deserializer)?;
+            EmptyBoundedVec::from_vec(inner).map_err(serde::de::Error::custom)
         }
     }
 
@@ -654,7 +648,7 @@ mod serde_impl {
         use schemars::JsonSchema;
 
         // we cannot use attributes, because the do not work with `const`, only numeric literals supported
-        impl<T: JsonSchema, const L: usize, const U: usize> JsonSchema for BoundedVec<T, L, U> {
+        impl<T: JsonSchema, const L: usize, const U: usize, W> JsonSchema for BoundedVec<T, L, U, W> {
             fn schema_name() -> Cow<'static, str> {
                 alloc::format!("BoundedVec{}Min{}Max{}", T::schema_name(), L, U).into()
             }
@@ -799,6 +793,29 @@ mod tests {
             data.iter_mut().collect::<Vec<&mut u8>>(),
             vec.iter_mut().collect::<Vec<&mut u8>>()
         );
+    }
+}
+
+#[cfg(feature = "serde")]
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod serde_tests {
+    use super::*;
+    use alloc::vec;
+    #[test]
+    fn deserialize_nonempty() {
+        assert_eq!(
+            serde_json::from_str::<BoundedVec::<u8, 2, 3>>("[1, 2]")
+                .unwrap()
+                .as_vec(),
+            &vec![1, 2]
+        );
+    }
+
+    #[test]
+    fn deserialize_empty() {
+        assert!(serde_json::from_str::<BoundedVec::<u8, 2, 3>>("[]").is_err());
+        assert!(serde_json::from_str::<EmptyBoundedVec::<u8, 3>>("[]").is_ok());
     }
 }
 
